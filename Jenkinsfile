@@ -2,55 +2,89 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_HUB_REPO = 'dumindudasun/node-jenkins-demo'
+        // GitHub and Docker Hub credentials IDs you created in Jenkins
+        GITHUB_CREDENTIALS = 'github-creds'
+        DOCKERHUB_CREDENTIALS = 'dockerhub-creds'
+        DOCKER_IMAGE = 'dumindudasun/node-jenkins-demo-EC2'
+        NODE_VERSION = '18' // Match your Node.js version
     }
 
     stages {
+
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/Dumindudasun/node-jenkins-dockerhub.git'
+                git branch: 'main',
+                    url: 'https://github.com/Dumindudasun/node-jenkins-dockerhub-EC2.git',
+                    credentialsId: "${GITHUB_CREDENTIALS}"
+            }
+        }
+
+        stage('Setup Node.js') {
+            steps {
+                // Install Node.js using NodeJS plugin
+                nodejs("${NODE_VERSION}") {
+                    sh 'node -v'
+                    sh 'npm -v'
+                }
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                bat 'npm install'
+                sh 'npm install'
             }
         }
 
         stage('Run Tests') {
             steps {
-                bat 'start /B node index.js'
-                bat 'npm test || echo "No tests found"'
-            }
-        }
-        stage('Build Docker Image') {
-            steps {
-                bat 'docker build -t %DOCKER_HUB_REPO%:latest .'
+                // Run tests but don’t fail build if no tests found
+                sh 'npm test || echo "No tests found"'
             }
         }
 
-        stage('Login to Docker Hub') {
+        stage('Build Docker Image') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    bat 'docker login -u %DOCKER_USER% -p %DOCKER_PASS%'
+                script {
+                    docker.build("${DOCKER_IMAGE}:${env.BUILD_NUMBER}")
                 }
             }
         }
 
         stage('Push Docker Image') {
             steps {
-                bat 'docker push %DOCKER_HUB_REPO%:latest'
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', "${DOCKERHUB_CREDENTIALS}") {
+                        docker.image("${DOCKER_IMAGE}:${env.BUILD_NUMBER}").push()
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to EC2') {
+            steps {
+                sshagent(['ec2-ssh-credentials-id']) {
+                    sh """
+                    ssh -o StrictHostKeyChecking=no ubuntu@16.171.137.244 '
+                        docker pull ${DOCKER_IMAGE}:${env.BUILD_NUMBER} &&
+                        docker stop node-app || true &&
+                        docker rm node-app || true &&
+                        docker run -d --name node-app -p 3000:3000 ${DOCKER_IMAGE}:${env.BUILD_NUMBER}
+                    '
+                    """
+                }
             }
         }
     }
 
     post {
+        always {
+            echo 'Build finished!'
+        }
         success {
-            echo '✅ Build and Push Successful!'
+            echo 'Build succeeded!'
         }
         failure {
-            echo '❌ Build failed!'
+            echo 'Build failed!'
         }
     }
 }
