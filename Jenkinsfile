@@ -21,7 +21,7 @@ pipeline {
 
         stage('Setup Node.js') {
             steps {
-                // Install Node.js using NodeJS plugin
+                // Instal Node.js using NodeJS plugin
                 nodejs("${NODE_VERSION}") {
                     sh 'node -v'
                     sh 'npm -v'
@@ -64,7 +64,7 @@ pipeline {
             steps {
                 sshagent(['ec2-ssh-credentials-id']) {
                     sh """
-                    ssh -o StrictHostKeyChecking=no ubuntu@16.171.137.244 '
+                    ssh -o StrictHostKeyChecking=no ubuntu@16.171.14.38 '
                         docker pull ${DOCKER_IMAGE}:${env.BUILD_NUMBER} &&
                         docker stop node-app || true &&
                         docker rm node-app || true &&
