@@ -21,7 +21,7 @@ pipeline {
 
         stage('Setup Node.js') {
             steps {
-                // Instal Node.js using NodeJS plugiN
+                // Instal Node.js using NodeJS plugin
                 nodejs("${NODE_VERSION}") {
                     sh 'node -v'
                     sh 'npm -v'
