@@ -8,7 +8,9 @@ pipeline {
         DOCKER_IMAGE = 'dumindudasun/node-jenkins-demo-EC2'
         NODE_VERSION = '18' // Match your Node.js version
     }
-
+    tools {
+        nodejs '18'
+    }
     stages {
 
         stage('Checkout') {
