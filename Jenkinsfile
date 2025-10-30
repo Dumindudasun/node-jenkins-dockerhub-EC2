@@ -40,7 +40,7 @@ pipeline {
         stage('Run Tests') {
             steps {
                 // Run tests but don’t fail build if no tests found
-                sh 'start /B node index.js'
+                sh 'node index.js'
                 sh 'npm test || echo "No tests found"'
             }
         }
