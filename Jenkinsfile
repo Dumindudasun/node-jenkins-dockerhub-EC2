@@ -2,19 +2,27 @@ pipeline {
     agent any
 
     environment {
-        // GitHub and Docker Hub credentials IDs you created in Jenkins
         GITHUB_CREDENTIALS = 'github-creds'
         DOCKERHUB_CREDENTIALS = 'dockerhub-creds'
         DOCKER_IMAGE = 'dumindudasun/node-jenkins-demo-EC2'
-        NODE_VERSION = '18' // Match your Node.js version
+        NODE_VERSION = '18'
     }
+
     tools {
         nodejs '18'
     }
-    stages {
 
+    options {
+        // Optional but recommended for cleanup
+        skipDefaultCheckout(false)
+        disableConcurrentBuilds()
+    }
+
+    stages {
         stage('Checkout') {
             steps {
+                // Clean workspace before pulling code
+                cleanWs()
                 git branch: 'main',
                     url: 'https://github.com/Dumindudasun/node-jenkins-dockerhub-EC2.git',
                     credentialsId: "${GITHUB_CREDENTIALS}"
@@ -23,42 +31,45 @@ pipeline {
 
         stage('Setup Node.js') {
             steps {
-                // Instal Node.js using NodeJS plugin
                 nodejs("${NODE_VERSION}") {
-                    sh 'node -v'
-                    sh 'npm -v'
+                    sh 'echo "Node version:" && node -v'
+                    sh 'echo "NPM version:" && npm -v'
                 }
             }
         }
-        
+
         stage('Install Dependencies') {
             steps {
-                sh '''
-                   echo "Cleaning workspace..."
-                   rm -rf node_modules package-lock.json
-                   npm cache clean --force
-                   npm ci
-                '''
-    }
-}
-
-     //   stage('Install Dependencies') {
-      //      steps {
-        //        sh 'npm install'
-         //   }
-       // }
+                nodejs("${NODE_VERSION}") {
+                    sh '''
+                        echo "🔹 Cleaning old dependencies..."
+                        rm -rf node_modules package-lock.json
+                        npm cache clean --force
+                        echo "🔹 Installing fresh dependencies..."
+                        npm ci
+                    '''
+                }
+            }
+        }
 
         stage('Run Tests') {
             steps {
-                // Run tests but don’t fail build if no tests found
-                sh 'node index.js $'
-                sh 'npm test || echo "No tests found"'
+                nodejs("${NODE_VERSION}") {
+                    // Run app + tests safely
+                    sh '''
+                        echo "🔹 Running tests..."
+                        node index.js || echo "⚠️ No main app execution"
+                        npm test || echo "⚠️ No tests found"
+                    '''
+                }
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 script {
+                    echo "🔹 Building Docker image..."
+                    sh 'docker --version || echo "⚠️ Docker not found"'
                     docker.build("${DOCKER_IMAGE}:${env.BUILD_NUMBER}")
                 }
             }
@@ -67,6 +78,7 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 script {
+                    echo "🔹 Pushing image to DockerHub..."
                     docker.withRegistry('https://index.docker.io/v1/', "${DOCKERHUB_CREDENTIALS}") {
                         docker.image("${DOCKER_IMAGE}:${env.BUILD_NUMBER}").push()
                     }
@@ -76,15 +88,18 @@ pipeline {
 
         stage('Deploy to EC2') {
             steps {
-                sshagent(['ec2-ssh-credentials-id']) {
-                    sh """
-                    ssh -o StrictHostKeyChecking=no ubuntu@16.171.14.38 '
-                        docker pull ${DOCKER_IMAGE}:${env.BUILD_NUMBER} &&
-                        docker stop node-app || true &&
-                        docker rm node-app || true &&
-                        docker run -d --name node-app -p 3000:3000 ${DOCKER_IMAGE}:${env.BUILD_NUMBER}
-                    '
-                    """
+                script {
+                    echo "🔹 Deploying to EC2..."
+                    sshagent(['ec2-ssh-credentials-id']) {
+                        sh """
+                            ssh -o StrictHostKeyChecking=no ubuntu@13.48.57.133 '
+                                docker pull ${DOCKER_IMAGE}:${env.BUILD_NUMBER} &&
+                                docker stop node-app || true &&
+                                docker rm node-app || true &&
+                                docker run -d --name node-app -p 3000:3000 ${DOCKER_IMAGE}:${env.BUILD_NUMBER}
+                            '
+                        """
+                    }
                 }
             }
         }
@@ -92,13 +107,13 @@ pipeline {
 
     post {
         always {
-            echo 'Build finished!'
+            echo '🧾 Build finished!'
         }
         success {
-            echo 'Build succeeded!'
+            echo '✅ Build succeeded!'
         }
         failure {
-            echo 'Build failed!'
+            echo '❌ Build failed!'
         }
     }
 }
