@@ -30,12 +30,23 @@ pipeline {
                 }
             }
         }
-
+        
         stage('Install Dependencies') {
             steps {
-                sh 'npm install'
-            }
-        }
+                sh '''
+                   echo "Cleaning workspace..."
+                   rm -rf node_modules package-lock.json
+                   npm cache clean --force
+                   npm ci
+                '''
+    }
+}
+
+     //   stage('Install Dependencies') {
+      //      steps {
+        //        sh 'npm install'
+         //   }
+       // }
 
         stage('Run Tests') {
             steps {
