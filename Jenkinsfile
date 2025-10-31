@@ -40,11 +40,15 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                cache(maxCacheSize: 2, caches: [path: 'node_modules']) {
-                  script {
-                      echo "🔹 Installing dependencies..."
-                      sh 'npm install'
-                  }
+                script {
+                    echo "🔹 Cleaning old dependencies..."
+                    sh '''
+                       rm -rf node_modules
+                       npm cache clean --force
+                       echo "🔹 Installing dependencies..."
+                       npm install
+                    '''
+
                 }
            }
         }
