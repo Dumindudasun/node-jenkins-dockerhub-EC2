@@ -1,13 +1,90 @@
-# 🚀 Node.js CI/CD Pipeline with Jenkins and Docker
+# 🚀 Node.js CI/CD Pipeline with Jenkins, Docker & AWS EC2
 
-This project demonstrates a **Complete CI/CD pipeline** for a simple Node.js application using **Jenkins**, **GitHub Webhooks**, and **Docker Hub**.
+This project demonstrates a complete **CI/CD pipeline** using:
+- **Node.js** for the web application  
+- **Jenkins** for continuous integration and delivery  
+- **Docker Hub** for container image storage  
+- **AWS EC2** instance for deployment  
 
-The goal is to automate the process of:
-1. Pulling code from GitHub
-2. Running unit tests
-3. Building a Docker image
-4. Pushing the image to Docker Hub
-5. Deploying the container automatically
+---
+
+## 🧰 Tech Stack
+
+| Tool | Purpose |
+|------|----------|
+| **Node.js** | Application runtime |
+| **Jenkins** | CI/CD automation |
+| **Docker** | Containerization |
+| **Docker Hub** | Image repository |
+| **AWS EC2** | Application hosting environment |
+
+---
+
+## 📦 Project Overview
+
+The pipeline automatically:
+1. Clones this GitHub repository into Jenkins.
+2. Installs Node.js dependencies.
+3. Builds and tests the Node.js application.
+4. Builds a Docker image and pushes it to Docker Hub.
+5. Connects to an **AWS EC2 instance** via SSH.
+6. Pulls the latest Docker image and restarts the container automatically.
+
+---
+
+## 🧑‍💻 Prerequisites
+
+Before running the pipeline, make sure you have:
+
+- A **GitHub repository** containing this project.
+- A **Docker Hub** account.
+- An **AWS EC2 instance** (Ubuntu preferred).
+- **Jenkins** installed on the EC2 instance with:
+  - Docker installed and running.
+  - Jenkins plugins:
+    - *Git Plugin*
+    - *NodeJS Plugin*
+    - *Docker Pipeline Plugin*
+    - *Pipeline: Stage View Plugin*
+    - *SSH Agent Plugin*
+
+---
+
+## ⚙️ Jenkins Configuration
+
+### 1. **Global Tool Configuration**
+
+- **NodeJS** → Name: `node18`  
+- **Git** → Path: `/usr/bin/git`
+- **Docker** → Installed on EC2 and accessible to Jenkins (`sudo usermod -aG docker jenkins`)
+
+### 2. **Credentials Setup**
+
+Add the following credentials in Jenkins:
+| ID | Type | Description |
+|----|------|--------------|
+| `github-creds` | Username & Password / Token | For accessing private GitHub repos |
+| `dockerhub-creds` | Username & Password | For pushing images to Docker Hub |
+| `ec2-ssh-credentials-id` | SSH Key | For connecting to EC2 instance |
+
+---
+
+## 🧩 Jenkinsfile Overview
+
+Your pipeline (`Jenkinsfile`) includes the following stages:
+
+```groovy
+stages {
+    stage('Checkout')       // Clones GitHub repo
+    stage('Install Dependencies')  // Installs npm packages
+    stage('Run Tests')      // Executes tests (optional)
+    stage('Build Docker Image')    // Builds app image
+    stage('Push Docker Image')     // Pushes image to Docker Hub
+    stage('Deploy to EC2')         // Pulls and runs latest image on EC2
+}
+
+
+
 
 ---
 
@@ -102,3 +179,14 @@ Add email/slack notifications for build status
 👨‍💻 Author
 Dumindu Dasun
 🎓 DevOps Enthusiast | Jenkins | Docker | CI/CD | Automation |
+
+CV placement example:
+
+Projects
+
+Node.js CI/CD Pipeline with Jenkins, Docker & AWS EC2 — (Personal DevOps Project)
+Implemented a full CI/CD workflow to automate building, testing, and deploying a Node.js app using Jenkins, Docker, and AWS EC2. Configured GitHub webhooks, Docker image publishing to Docker Hub, and EC2 deployment automation. Strengthened hands-on knowledge in cloud-based DevOps environments.
+
+✅ LinkedIn description (shorter version):
+
+Built and deployed a Node.js CI/CD pipeline using Jenkins, Docker, and AWS EC2. Automated code integration, Docker image creation, and EC2 deployment with Jenkins declarative pipelines. Enhanced skills in DevOps automation, cloud deployment, and CI/CD best practices.
