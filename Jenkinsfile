@@ -40,15 +40,13 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                nodejs("${NODE_VERSION}") {
-                    sh '''
-                        echo "🔹 Cleaning old dependencies..."
-                        rm -rf node_modules package-lock.json
-                        npm cache clean --force
-                        echo "🔹 Installing fresh dependencies..."
-                        npm ci
-                    '''
-                }
+               sh '''
+                  echo "🔹 Cleaning old dependencies..."
+                  rm -rf node_modules
+                  npm cache clean --force
+                  echo "🔹 Installing dependencies..."
+                  npm ci
+              '''
             }
         }
 
@@ -92,7 +90,7 @@ pipeline {
                     echo "🔹 Deploying to EC2..."
                     sshagent(['ec2-ssh-credentials-id']) {
                         sh """
-                            ssh -o StrictHostKeyChecking=no ubuntu@13.48.57.133 '
+                            ssh -o StrictHostKeyChecking=no ubuntu@16.171.170.139 '
                                 docker pull ${DOCKER_IMAGE}:${env.BUILD_NUMBER} &&
                                 docker stop node-app || true &&
                                 docker rm node-app || true &&
