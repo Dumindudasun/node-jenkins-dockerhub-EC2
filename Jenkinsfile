@@ -59,7 +59,7 @@ pipeline {
                     // Run app + tests safely
                     sh '''
                         echo "🔹 Running tests..."
-                        node index.js > app.log 2>&1 & || echo "⚠️ No main app execution"
+                        node index.js 
                         npm test || echo "⚠️ No tests found"
                     '''
                 }
