@@ -7,6 +7,12 @@ This project demonstrates a complete **CI/CD pipeline** using:
 - **AWS EC2** instance for deployment  
 
 ---
+## 🚀 Impact
+
+- Reduced deployment time from ~15 minutes (manual) to under 5 minutes (automated)
+- Eliminated manual build and deployment steps
+- Enabled fully automated CI/CD workflow using Jenkins
+- Improved consistency and reduced human error in deployments
 
 ## 🧰 Tech Stack
 
